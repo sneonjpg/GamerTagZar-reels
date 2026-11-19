@@ -44,6 +44,8 @@ def main():
     ap.add_argument("--layout", choices=["fill", "blur"], default="blur")
     ap.add_argument("--hook", default=""); ap.add_argument("--out", required=True)
     ap.add_argument("--no-transcribe", action="store_true")
+    ap.add_argument("--name", default="", help="streamer name for captions, e.g. KreekCraft")
+    ap.add_argument("--tag", default="", help="campaign hashtag, e.g. #KreekCraft")
     a = ap.parse_args()
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     nt = ["--no-transcribe"] if a.no_transcribe else []
@@ -90,7 +92,16 @@ def main():
             c = cands[p]
             lines += [f"## clip_{k}.mp4", f"- source time: {c['start']:.0f}s to {c['end']:.0f}s ({c['end'] - c['start']:.0f}s)",
                       f"- why: {', '.join(c['why'])}", f"- said: {c['text'] or '(no transcript)'}",
-                      f"- rule check: {'PASS' if 'RESULT: PASS' in chk.stdout else 'FAIL'}", "", "```", chk.stdout.strip(), "```", ""]
+                      f"- rule check: {'PASS' if 'RESULT: PASS' in chk.stdout else 'FAIL'}", ""]
+            if a.name:
+                who, tag = a.name, a.tag or "#" + a.name.replace(" ", "")
+                lines += ["Captions (replace WHAT HAPPENS with what happens in the clip):", "",
+                          f"- YouTube Shorts title: `#ad {who} WHAT HAPPENS in GTA 6 {tag} #Shorts`",
+                          f"- YouTube description: `Clip from {who}'s GTA 6 stream. Credit: {who} {tag} #GTA6`",
+                          f"- X: `#ad {who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag}`",
+                          f"- TikTok: `#ad {who} WHAT HAPPENS in GTA 6 {tag} #GTA6 #gaming`",
+                          f"- Instagram: `#ad {who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag} #GTA6 #GTAVI #gaming`", ""]
+            lines += ["```", chk.stdout.strip(), "```", ""]
             shutil.copy(d / "candidates.md", out / f"candidates_{d.name}.md")
     (out / "clips.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"\n{k} clip(s) -> {out}")
