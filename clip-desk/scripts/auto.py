@@ -56,17 +56,18 @@ def main():
         py("live.py", a.src, "--minutes", a.minutes, check=False)
         ld = job_dir(a.src) / "live"
         spikes = sorted(ld.glob("spike_*.mp4"), key=lambda p: int(p.stem.split("_")[1]))[: a.top]
-        if spikes:
-            for s in spikes:
-                py("moments.py", s, "--top", 1, "--min", 10, "--max", 40, *nt)
+        for s in spikes:  # chat spikes first: the moments chat reacted to
+            if py("moments.py", s, "--top", 1, "--min", 10, "--max", 40, *nt, check=False) == 0:
                 jobs.append((job_dir(str(s)), [1]))
-        else:
+        need = a.top - len(jobs)
+        if need > 0:  # fill the rest from the whole recording (loudness + hype words)
             rec = concat_segments(ld)
-            if not rec:
-                sys.exit("nothing was recorded: the stream may be offline, or YouTube blocked the download")
-            print("no chat spikes, scoring the whole recording", flush=True)
-            py("moments.py", rec, "--top", a.top, "--max", 35, *nt)
-            jobs.append((job_dir(str(rec)), list(range(1, a.top + 1))))
+            if not rec and not jobs:
+                sys.exit("nothing was recorded: the stream may be offline or the site refused the download")
+            if rec:
+                print(f"{len(jobs)} chat spike clip(s), scoring the whole recording for {need} more", flush=True)
+                if py("moments.py", rec, "--top", need, "--max", 35, *nt, check=False) == 0:
+                    jobs.append((job_dir(str(rec)), list(range(1, need + 1))))
     else:
         py("moments.py", a.src, "--top", a.top, "--max", 35, "--max-minutes", int(a.minutes), *nt)
         jobs.append((job_dir(a.src), list(range(1, a.top + 1))))
