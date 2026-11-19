@@ -99,7 +99,7 @@ Discovery:
 Tools:
 
 - **Long videos (streams, long YouTube videos):** use this plugin's own skills: `trend-radar` and `stream-finder` to find sources, `moment-finder` to find the best moments, `clip-cutter` to make the vertical clip. (If I also own OpusClip or Klap, they can be used as an alternative: OpusClip's ClipAnything finds highlights in any genre including gaming, has ReframeAnything to reframe for vertical, adds editable captions, and has an API. Klap turns long videos with speech into vertical clips with AI reframing, captions and a virality score. Check each tool's current free plan limits and use the free minutes on the longest, best sources.)
-- **Short clips and edits:** use the clip desk in `gamertagzar/clip-desk`. If you can run code, use ffmpeg for trims, crops, text overlays and burned-in captions (the `clip-cutter` skill does this). CapCut works for manual edits.
+- **Short clips and edits:** use the clip desk in `clip-desk`. If you can run code, use ffmpeg for trims, crops, text overlays and burned-in captions (the `clip-cutter` skill does this). CapCut works for manual edits.
 - Always review AI picks. AI clippers miss context and can pick a spoiler or a bad moment.
 
 Make it ours (every clip):

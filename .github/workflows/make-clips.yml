@@ -1,0 +1,98 @@
+name: Make GamerTagZar clips
+
+# Runs the clip desk on GitHub's computers (full internet, free for public repos).
+# Start it from the Actions tab: "Make GamerTagZar clips" > Run workflow.
+# Finished clips are committed to page/media/edits/<date>-run<number>/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "YouTube or Twitch link (live stream or finished video)"
+        required: true
+        default: "https://www.youtube.com/watch?v=xFcI47X15Lo"
+      mode:
+        description: "live = record the stream now and clip chat spikes, vod = finished video"
+        type: choice
+        options: [live, vod]
+        default: live
+      minutes:
+        description: "How many minutes to record (live) or scan (vod)"
+        default: "20"
+      top:
+        description: "How many clips"
+        default: "3"
+      layout:
+        description: "blur = whole frame (streamer stays in shot), fill = cropped to fill"
+        type: choice
+        options: [blur, fill]
+        default: blur
+      hook:
+        description: "Optional hook text burned in for the first 2 seconds"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: make-clips
+  cancel-in-progress: false
+
+jobs:
+  clips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: clip-desk/requirements.txt
+
+      - name: Install ffmpeg and Python packages
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core > /dev/null
+          pip install -q -r clip-desk/requirements.txt
+
+      - name: Cache the caption model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-small-v1
+
+      - name: Make clips
+        working-directory: page
+        env:
+          URL: ${{ inputs.url }}
+          MODE: ${{ inputs.mode }}
+          MINUTES: ${{ inputs.minutes }}
+          TOP: ${{ inputs.top }}
+          LAYOUT: ${{ inputs.layout }}
+          HOOK: ${{ inputs.hook }}
+        run: |
+          OUT="media/edits/$(date -u +%Y-%m-%d)-run${GITHUB_RUN_NUMBER}"
+          echo "OUT=page/$OUT" >> "$GITHUB_ENV"
+          python ../clip-desk/scripts/auto.py "$URL" --mode "$MODE" --minutes "$MINUTES" --top "$TOP" \
+            --layout "$LAYOUT" --hook "$HOOK" --out "$OUT"
+
+      - name: Save clips to the repo
+        if: always()
+        run: |
+          [ -d "$OUT" ] || { echo "no output folder"; exit 0; }
+          git config user.name "gamertagzar-clip-desk"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "$OUT"
+          git commit -m "Clips: run ${GITHUB_RUN_NUMBER} (${{ inputs.mode }}, ${{ inputs.minutes }} min)" || exit 0
+          git pull --rebase -q || true
+          git push
+
+      - name: Also attach clips to this run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clips-run${{ github.run_number }}
+          path: ${{ env.OUT }}
+          if-no-files-found: ignore
