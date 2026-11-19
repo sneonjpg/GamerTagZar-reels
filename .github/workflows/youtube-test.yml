@@ -22,6 +22,14 @@ jobs:
         with: { python-version: "3.12" }
       - name: Install
         run: pip install -q -U "yt-dlp[default]" bgutil-ytdlp-pot-provider
+      - name: Mirrors (Twitch and Kick)
+        run: |
+          set +e
+          for u in twitch.tv/dylanpage twitch.tv/dylan_page twitch.tv/dylanpagelive twitch.tv/kreekcraft twitch.tv/tomo twitch.tv/tomodachi \
+                   kick.com/dylanpage kick.com/kreekcraft kick.com/tomo; do
+            out=$(timeout 40 python -m yt_dlp --no-warnings -g -f b "https://$u" 2>&1)
+            if echo "$out" | grep -q '^https://'; then echo "MIRROR $u: LIVE NOW"; else echo "MIRROR $u: $(echo "$out" | grep -m1 ERROR | cut -c1-120)"; fi
+          done
       - name: Probe
         env: { URL: "${{ inputs.url }}" }
         run: |
