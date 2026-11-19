@@ -4,3 +4,4 @@
 - 2026-11-19: Settings: @GamerTagZar, YouTube Shorts + X, UK time. Campaign clips post on the main GamerTagZar accounts.
 - 2026-11-19: Campaigns picked: Dylan Page, KreekCraft, Tomo (Content Rewards). Waiting for the human to join.
 - 2026-11-19: Platforms widened to YouTube Shorts, X, TikTok, Instagram Reels. Ad disclosure: #ad in title and caption. Clips made free with the clip desk (no vidIQ credits).
+- 2026-11-19: First auto run (KreekCraft, Twitch). Approved clip 3 (parachute) and clip 1 (jet on ocean); rejected clip 2 (story cutscene). Rule: never post story cutscenes during launch week.
