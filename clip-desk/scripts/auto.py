@@ -46,6 +46,7 @@ def main():
     ap.add_argument("--no-transcribe", action="store_true")
     ap.add_argument("--name", default="", help="streamer name for captions, e.g. KreekCraft")
     ap.add_argument("--tag", default="", help="campaign hashtag, e.g. #KreekCraft")
+    ap.add_argument("--campaign", default="", help="campaign link; empty = growth clip for GamerTagZar (no #ad)")
     a = ap.parse_args()
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     nt = ["--no-transcribe"] if a.no_transcribe else []
@@ -96,12 +97,14 @@ def main():
                       f"- rule check: {'PASS' if 'RESULT: PASS' in chk.stdout else 'FAIL'}", ""]
             if a.name:
                 who, tag = a.name, a.tag or "#" + a.name.replace(" ", "")
-                lines += ["Captions (replace WHAT HAPPENS with what happens in the clip):", "",
-                          f"- YouTube Shorts title: `#ad {who} WHAT HAPPENS in GTA 6 {tag} #Shorts`",
+                ad = "#ad " if a.campaign else ""
+                lines += [f"- campaign: {a.campaign or 'none (growth clip for GamerTagZar, no #ad)'}", "",
+                          "Captions (replace WHAT HAPPENS with what happens in the clip):", "",
+                          f"- YouTube Shorts title: `{ad}{who} WHAT HAPPENS in GTA 6 {tag} #Shorts`",
                           f"- YouTube description: `Clip from {who}'s GTA 6 stream. Credit: {who} {tag} #GTA6`",
-                          f"- X: `#ad {who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag}`",
-                          f"- TikTok: `#ad {who} WHAT HAPPENS in GTA 6 {tag} #GTA6 #gaming`",
-                          f"- Instagram: `#ad {who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag} #GTA6 #GTAVI #gaming`", ""]
+                          f"- X: `{ad}{who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag}`",
+                          f"- TikTok: `{ad}{who} WHAT HAPPENS in GTA 6 {tag} #GTA6 #gaming`",
+                          f"- Instagram: `{ad}{who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag} #GTA6 #GTAVI #gaming`", ""]
             lines += ["```", chk.stdout.strip(), "```", ""]
             shutil.copy(d / "candidates.md", out / f"candidates_{d.name}.md")
     (out / "clips.md").write_text("\n".join(lines), encoding="utf-8")

@@ -1,80 +1,124 @@
-name: Auto clips (every 2 hours)
+name: Auto clips (hourly)
 
-# Every 2 hours: check which campaign streamers in page/streamers.csv are live on Twitch,
-# record each live one, cut clips with captions and save them to page/media/edits/.
-# Nothing is posted. Edit page/streamers.csv to add or remove streamers.
+# Every hour:
+#  1. find who is live: campaign streamers from page/streamers.csv + the biggest GTA 6 streams on Twitch
+#  2. record each one in parallel and cut clips with captions
+#  3. save clips to page/media/edits/<time>-<streamer>/ (nothing is posted; Claude screens, you approve)
+# Campaign clips get #ad and the campaign tag. Others are growth clips for GamerTagZar's own page.
 
 on:
   schedule:
-    - cron: "17 */2 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       minutes:
-        description: "Minutes to record per live streamer"
-        default: "15"
+        description: "Minutes to record per streamer"
+        default: "20"
+      top:
+        description: "Clips per streamer"
+        default: "5"
+      extra:
+        description: "Extra top GTA 6 Twitch streamers to clip (besides campaigns)"
+        default: "4"
 
 permissions:
   contents: write
 
 concurrency:
-  group: make-clips
+  group: auto-clips
   cancel-in-progress: false
 
 jobs:
-  auto:
+  discover:
     runs-on: ubuntu-latest
-    timeout-minutes: 170
+    timeout-minutes: 10
+    outputs:
+      targets: ${{ steps.find.outputs.targets }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q "yt-dlp[default]" requests
+      - name: Find live streamers
+        id: find
+        env:
+          EXTRA: ${{ inputs.extra || '4' }}
+        run: |
+          python - <<'EOF'
+          import csv, json, os, subprocess, sys
+          sys.path.insert(0, "clip-desk/scripts")
+          targets, seen = [], set()
+          for r in csv.DictReader(open("page/streamers.csv", encoding="utf-8")):
+              live = subprocess.run([sys.executable, "-m", "yt_dlp", "--no-warnings", "-g", "-f", "b", r["url"]],
+                                    capture_output=True, text=True, timeout=60).stdout.strip().startswith("https://")
+              print(f"campaign {r['name']}: {'LIVE' if live else 'offline'}")
+              if live:
+                  login = r["url"].rstrip("/").split("/")[-1].lower()
+                  seen.add(login)
+                  targets.append({"name": r["name"], "url": r["url"], "tag": r["tag"], "campaign": r["campaign"]})
+          try:
+              import twitch
+              extra = int(os.environ.get("EXTRA", "4"))
+              for s in twitch.top_streams("Grand Theft Auto VI", 30):
+                  if extra <= 0: break
+                  if s["login"].lower() in seen: continue
+                  seen.add(s["login"].lower()); extra -= 1
+                  print(f"top stream {s['name']}: {s['viewers']} viewers")
+                  targets.append({"name": s["name"], "url": s["url"], "tag": "#" + s["name"].replace(" ", ""), "campaign": ""})
+          except Exception as e:
+              print(f"top streams unavailable: {e}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("targets=" + json.dumps(targets) + "\n")
+          print(json.dumps(targets, indent=1))
+          EOF
 
+  record:
+    needs: discover
+    if: needs.discover.outputs.targets != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        t: ${{ fromJSON(needs.discover.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: clip-desk/requirements.txt
-
-      - name: Install ffmpeg and Python packages
+      - name: Install
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core > /dev/null
           pip install -q -r clip-desk/requirements.txt
-
-      - name: Cache the caption model
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
           key: whisper-small-v1
-
-      - name: Record live streamers and cut clips
+      - name: Record and cut
         working-directory: page
         env:
-          MINUTES: ${{ inputs.minutes || '15' }}
+          NAME: ${{ matrix.t.name }}
+          URL: ${{ matrix.t.url }}
+          TAG: ${{ matrix.t.tag }}
+          CAMPAIGN: ${{ matrix.t.campaign }}
+          MINUTES: ${{ inputs.minutes || '20' }}
+          TOP: ${{ inputs.top || '5' }}
         run: |
-          python - <<'EOF'
-          import csv, os, subprocess, sys, datetime
-          rows = list(csv.DictReader(open("streamers.csv", encoding="utf-8")))
-          stamp = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%M")
-          made = 0
-          for r in rows:
-              live = subprocess.run([sys.executable, "-m", "yt_dlp", "--no-warnings", "-g", "-f", "b", r["url"]],
-                                    capture_output=True, text=True, timeout=60)
-              if not live.stdout.strip().startswith("https://"):
-                  print(f"{r['name']}: not live"); continue
-              slug = r["name"].lower().replace(" ", "")
-              out = f"media/edits/{stamp}-{slug}"
-              print(f"{r['name']}: LIVE, recording {os.environ['MINUTES']} min -> {out}", flush=True)
-              rc = subprocess.run([sys.executable, "../clip-desk/scripts/auto.py", r["url"], "--mode", "live",
-                                   "--minutes", os.environ["MINUTES"], "--top", "3", "--layout", "blur",
-                                   "--name", r["name"], "--tag", r["tag"], "--out", out]).returncode
-              made += rc == 0
-          print(f"done: clips made for {made} streamer(s)")
-          EOF
-
-      - name: Save clips to the repo
+          SLUG=$(echo "$NAME" | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9')
+          OUT="media/edits/$(date -u +%Y-%m-%d-%H%M)-$SLUG"
+          echo "OUT=page/$OUT" >> "$GITHUB_ENV"
+          python ../clip-desk/scripts/auto.py "$URL" --mode live --minutes "$MINUTES" --top "$TOP" --layout blur \
+            --name "$NAME" --tag "$TAG" --campaign "$CAMPAIGN" --out "$OUT"
+      - name: Save clips
         if: always()
         run: |
+          [ -d "$OUT" ] || exit 0
           git config user.name "gamertagzar-clip-desk"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f page/media/edits || true
-          git commit -m "Auto clips $(date -u +%Y-%m-%d\ %H:%M)" || exit 0
-          git pull --rebase -q || true
-          git push
+          git add -f "$OUT"
+          git commit -m "Auto clips: ${{ matrix.t.name }}" || exit 0
+          for i in 1 2 3 4 5; do git pull --rebase -q && git push && exit 0; sleep $((i * 7)); done
+          exit 1
