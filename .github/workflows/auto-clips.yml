@@ -42,7 +42,7 @@ jobs:
       - name: Find live streamers
         id: find
         env:
-          EXTRA: ${{ inputs.extra || '4' }}
+          EXTRA: ${{ inputs.extra || '3' }}
         run: |
           python - <<'EOF'
           import csv, json, os, subprocess, sys
@@ -55,7 +55,7 @@ jobs:
               if live:
                   login = r["url"].rstrip("/").split("/")[-1].lower()
                   seen.add(login)
-                  targets.append({"name": r["name"], "url": r["url"], "tag": r["tag"], "campaign": r["campaign"]})
+                  targets.append({"name": r["name"], "url": r["url"], "tag": r["tag"], "campaign": r["campaign"], "top": "8", "minutes": "40"})
           try:
               import twitch
               extra = int(os.environ.get("EXTRA", "4"))
@@ -64,7 +64,7 @@ jobs:
                   if s["login"].lower() in seen: continue
                   seen.add(s["login"].lower()); extra -= 1
                   print(f"top stream {s['name']}: {s['viewers']} viewers")
-                  targets.append({"name": s["name"], "url": s["url"], "tag": "#" + s["name"].replace(" ", ""), "campaign": ""})
+                  targets.append({"name": s["name"], "url": s["url"], "tag": "#" + s["name"].replace(" ", ""), "campaign": "", "top": "4", "minutes": "20"})
           except Exception as e:
               print(f"top streams unavailable: {e}")
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
@@ -104,8 +104,8 @@ jobs:
           URL: ${{ matrix.t.url }}
           TAG: ${{ matrix.t.tag }}
           CAMPAIGN: ${{ matrix.t.campaign }}
-          MINUTES: ${{ inputs.minutes || '20' }}
-          TOP: ${{ inputs.top || '5' }}
+          MINUTES: ${{ matrix.t.minutes }}
+          TOP: ${{ matrix.t.top }}
         run: |
           SLUG=$(echo "$NAME" | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9')
           OUT="media/edits/$(date -u +%Y-%m-%d-%H%M)-$SLUG"
