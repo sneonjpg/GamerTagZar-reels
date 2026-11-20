@@ -8,3 +8,4 @@
 - 2026-11-20: Instagram @GamerTagZar set up (professional). Name: "GamerTagZar | GTA 6 Clips". Bio: "GTA 6 clips, hidden spots & tips 🎮 / Best moments from the biggest streams / New clips every day ⬇️ / Fan page · not affiliated with Rockstar". Joined campaigns: KreekCraft, Dylan Page.
 - 2026-11-20: Clipping widened: hourly, every live campaign streamer + top 4 GTA 6 Twitch streams, 20 min each, 5 clips each, in parallel. Non-campaign clips are growth clips for GamerTagZar (no #ad).
 - 2026-11-20: Posting via Make scenario "Publish GamerTagZar (IG+YT+X)" (id 10200851): Instagram @gamertagzar, YouTube gamertagzar@gmail.com, X via Buffer. Replaced the unused "GTZ X post (Buffer)" scenario (deactivated, can be re-enabled).
+- 2026-11-20: Posted KreekCraft A, B, C (campaign). Approved growth clips D caseoh_ van money, E KaiCenat basketball, F xQc race start, G xQc race crash; posting hourly.
