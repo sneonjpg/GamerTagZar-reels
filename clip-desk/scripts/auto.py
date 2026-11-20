@@ -58,7 +58,7 @@ def main():
         ld = job_dir(a.src) / "live"
         spikes = sorted(ld.glob("spike_*.mp4"), key=lambda p: int(p.stem.split("_")[1]))[: a.top]
         for s in spikes:  # chat spikes first: the moments chat reacted to
-            if py("moments.py", s, "--top", 1, "--min", 10, "--max", 40, *nt, check=False) == 0:
+            if py("moments.py", s, "--top", 1, "--min", 30, "--max", 40, *nt, check=False) == 0:
                 jobs.append((job_dir(str(s)), [1]))
         need = a.top - len(jobs)
         if need > 0:  # fill the rest from the whole recording (loudness + hype words)
@@ -67,10 +67,10 @@ def main():
                 sys.exit("nothing was recorded: the stream may be offline or the site refused the download")
             if rec:
                 print(f"{len(jobs)} chat spike clip(s), scoring the whole recording for {need} more", flush=True)
-                if py("moments.py", rec, "--top", need, "--max", 35, *nt, check=False) == 0:
+                if py("moments.py", rec, "--top", need, "--min", 30, "--max", 45, *nt, check=False) == 0:
                     jobs.append((job_dir(str(rec)), list(range(1, need + 1))))
     else:
-        py("moments.py", a.src, "--top", a.top, "--max", 35, "--max-minutes", int(a.minutes), *nt)
+        py("moments.py", a.src, "--top", a.top, "--min", 30, "--max", 45, "--max-minutes", int(a.minutes), *nt)
         jobs.append((job_dir(a.src), list(range(1, a.top + 1))))
 
     # 2. cut, check, collect

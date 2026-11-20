@@ -206,7 +206,7 @@ def cut(rec, wall, before, after, lag, out):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("url"); ap.add_argument("--minutes", type=float, default=60)
-    ap.add_argument("--before", type=float, default=15); ap.add_argument("--after", type=float, default=20)
+    ap.add_argument("--before", type=float, default=18); ap.add_argument("--after", type=float, default=22)
     ap.add_argument("--window", type=int, default=10); ap.add_argument("--baseline", type=int, default=300)
     ap.add_argument("--ratio", type=float, default=3); ap.add_argument("--min-msgs", type=int, default=8)
     ap.add_argument("--cooldown", type=float, default=45)
