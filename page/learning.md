@@ -23,3 +23,7 @@
 - Every campaign clip: the moment it posts, fetch its Instagram (and YouTube) link and send Neo a nudge with the link ready to copy plus the campaign submit link. Content Rewards wants submission within 30 minutes of posting.
 - Link lookup: Firecrawl Alexandria scrapecreators instagram/user-reels, handle "gamertagzar" (2 credits).
 - Day 1 Instagram views: keyless car 2,532 · jet 1,992 · run over 243 · parachute 239 · yard sale 189.
+
+### 2026-11-21 growth-clip experiments
+- Growth clips now get emoji stickers on key words (money, cops, bank, crash...) and an end-card comment question. Campaign clips stay clean.
+- Compare growth clip views/comments before vs after this change over the next week.

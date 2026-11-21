@@ -81,7 +81,7 @@ def main():
         for p in picks:
             if p not in cands:
                 continue
-            args = [d, "--pick", p, "--layout", a.layout]
+            args = [d, "--pick", p, "--layout", a.layout, "--style", "clean" if a.campaign else "growth"]
             if a.hook:
                 args += ["--hook", a.hook]
             if py("cut.py", *args, check=False) != 0:

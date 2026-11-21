@@ -208,6 +208,8 @@ def main():
     ap.add_argument("--allow-profanity", action="store_true", help="keep swear words in captions (slurs are always masked)")
     ap.add_argument("--cam", default="auto", help="auto (find the webcam) or x:y:w:h fractions")
     ap.add_argument("--start", type=float); ap.add_argument("--end", type=float)
+    ap.add_argument("--style", choices=["clean", "growth"], default="clean",
+                    help="growth: emoji stickers on key words + end-card comment question (for unpaid growth clips)")
     a = ap.parse_args()
     d = Path(a.job); c = load_json(d / "candidates.json")
     pick = next(x for x in c["candidates"] if x["n"] == a.pick)
@@ -264,7 +266,15 @@ def main():
     ass = out / f"clip_{a.pick}.ass"
     caps = a.captions
     cap_words = words if caps != 'none' else []
-    ass.write_text(build_ass(cap_words, s0, e0, a.hook, cap_y, title=title, caps=caps, profanity=a.allow_profanity), encoding="utf-8")
+    ass_text = build_ass(cap_words, s0, e0, a.hook, cap_y, title=title, caps=caps, profanity=a.allow_profanity)
+    extra_inputs, stick = [], []
+    if a.style == "growth":
+        import flair
+        ass_text += flair.cta_event(e0 - s0, seed=a.pick)
+        stick = flair.stickers(words, s0, e0)
+        for png, _, _ in stick:
+            extra_inputs += ["-loop", "1", "-t", f"{e0 - s0:.2f}", "-i", str(png)]
+    ass.write_text(ass_text, encoding="utf-8")
     src = None; gx = None
     if layout == 'react':
         from common import ffprobe
@@ -272,8 +282,11 @@ def main():
         src = (int(vs['width']), int(vs['height']))
         gx = game_offset(c['source'], s0, e0, src, [float(t) for t in cam.split(':')])
     v = video_filter(layout, cam, ass, band=band, cam_side=side, src=src, game_x=gx, face_expr=face_expr)
+    if stick:
+        import flair
+        v = flair.overlay_graph(v, stick)
     mp4 = out / f"clip_{a.pick}.mp4"
-    run([tool("ffmpeg"), "-y", "-v", "error", "-ss", f"{s0:.2f}", "-to", f"{e0:.2f}", "-i", c["source"],
+    run([tool("ffmpeg"), "-y", "-v", "error", "-ss", f"{s0:.2f}", "-to", f"{e0:.2f}", "-i", c["source"], *extra_inputs,
          "-filter_complex", v, "-map", "[vo]", "-map", "0:a?", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11",
          "-c:v", "libx264", "-preset", "medium", "-crf", "21", "-maxrate", "4500k", "-bufsize", "9000k", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
          "-ar", "48000", "-movflags", "+faststart", str(mp4)])
