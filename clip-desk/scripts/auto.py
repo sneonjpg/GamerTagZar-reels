@@ -104,7 +104,9 @@ def main():
                           f"- YouTube description: `Clip from {who}'s GTA 6 stream. Credit: {who} {tag} #GTA6`",
                           f"- X: `{ad}{who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag}`",
                           f"- TikTok: `{ad}{who} WHAT HAPPENS in GTA 6 {tag} #GTA6 #gaming`",
-                          f"- Instagram: `{ad}{who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag} #GTA6 #GTAVI #gaming`", ""]
+                          f"- Instagram: `{ad}{who} WHAT HAPPENS in GTA 6 \U0001F3A5 {who} {tag} #GTA6 #GTAVI #gaming`",
+                          "- Caption ends with a question, e.g. `Would you try this? \U0001F447`",
+                          "- First comment (posted automatically on Instagram): `Comment \U0001F525 if you'd try this in GTA 6, or \U0001F480 if you'd fail`", ""]
             lines += ["```", chk.stdout.strip(), "```", ""]
             shutil.copy(d / "candidates.md", out / f"candidates_{d.name}.md")
     (out / "clips.md").write_text("\n".join(lines), encoding="utf-8")

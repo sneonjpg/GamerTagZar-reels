@@ -27,3 +27,5 @@
 ### 2026-11-21 growth-clip experiments
 - Growth clips now get emoji stickers on key words (money, cops, bank, crash...) and an end-card comment question. Campaign clips stay clean.
 - Compare growth clip views/comments before vs after this change over the next week.
+- 2026-11-21: Every Instagram post now gets an automatic first comment with a reply prompt (Make step). Instagram's API can't pin comments, so pinning stays manual (optional).
+- Captions end with a question ("Would you try this? 👇").
