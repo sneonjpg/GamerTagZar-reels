@@ -59,9 +59,12 @@ jobs:
           try:
               import twitch
               extra = int(os.environ.get("EXTRA", "4"))
-              for s in twitch.top_streams("Grand Theft Auto VI", 30):
+              allow = [l.strip().lower() for l in open("page/growth_streamers.txt") if l.strip() and not l.startswith("#")]
+              for s in twitch.top_streams("Grand Theft Auto VI", 100):
                   if extra <= 0: break
                   if s["login"].lower() in seen: continue
+                  if s["login"].lower() not in allow:
+                      continue  # English-speaking allowlist only (page/growth_streamers.txt)
                   seen.add(s["login"].lower()); extra -= 1
                   print(f"top stream {s['name']}: {s['viewers']} viewers")
                   targets.append({"name": s["name"], "url": s["url"], "tag": "#" + s["name"].replace(" ", ""), "campaign": "", "top": "4", "minutes": "20"})
