@@ -12,3 +12,4 @@
 - 2026-11-20: Joined ClipFlip. Dropped Clip.tech. Campaign clips now post on approval with an instant submit nudge.
 - 2026-11-21: Posted H (bank) + I (apartment) on approval; Neo submitted both on Instagram in time. YouTube daily upload limit hit for I; retry scheduled 22 Nov 05:07 UTC.
 - 2026-11-21: Growth clips limited to English-speaking streamers (page/growth_streamers.txt).
+- 2026-11-22: Posted J (bank app), K (non-lethal), L (yacht) on approval, all submitted to KreekCraft in time; first comments auto-posted. Growth M/N/O scheduled 19:41/20:42/21:42 UTC.
