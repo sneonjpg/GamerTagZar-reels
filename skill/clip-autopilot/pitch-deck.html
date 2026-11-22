@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clip Autopilot</title>
+<style>
+  :root{
+    --bg:#0b0b12; --panel:#151522; --line:#2a2a3d; --ink:#f4f3ff; --muted:#a7a6c2;
+    --pink:#ff3d9a; --cyan:#2de2e6; --lime:#b8ff3c; --amber:#ffb020;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+  .deck{position:relative;height:100%;width:100%}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(20px,5vw,72px);opacity:0;pointer-events:none;transform:translateY(12px);
+    transition:opacity .35s ease, transform .35s ease;overflow-y:auto;isolation:isolate;padding-bottom:70px}
+  .slide.on{opacity:1;pointer-events:auto;transform:none}
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;
+    background:radial-gradient(1200px 500px at 85% -10%, rgba(255,61,154,.22), transparent 60%),
+               radial-gradient(900px 500px at -10% 110%, rgba(45,226,230,.16), transparent 60%)}
+  .kicker{font-size:clamp(12px,1.4vw,15px);letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);font-weight:700;margin-bottom:14px}
+  h1{font-size:clamp(38px,7.5vw,96px);line-height:.98;font-weight:900;letter-spacing:-.02em}
+  h2{font-size:clamp(28px,4.6vw,58px);line-height:1.05;font-weight:850;letter-spacing:-.015em;margin-bottom:22px}
+  p.lead{font-size:clamp(17px,2.2vw,26px);color:var(--muted);max-width:42ch;margin-top:18px;line-height:1.35}
+  .pink{color:var(--pink)} .lime{color:var(--lime)} .cyan{color:var(--cyan)} .amber{color:var(--amber)}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .card h3{font-size:clamp(16px,1.8vw,21px);margin-bottom:6px}
+  .card p,.card li{color:var(--muted);font-size:clamp(14px,1.5vw,17px);line-height:1.4}
+  .card ul{padding-left:18px}
+  .big{font-size:clamp(44px,8vw,104px);font-weight:900;line-height:1}
+  .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;
+    font-size:clamp(14px,1.6vw,18px);font-weight:700}
+  .step small{display:block;color:var(--muted);font-weight:500;font-size:.8em;margin-top:2px}
+  .arrow{color:var(--pink);font-weight:900;font-size:22px}
+  .you{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime) inset}
+  .quote{border-left:4px solid var(--pink);padding:8px 0 8px 16px;margin:8px 0;font-size:clamp(16px,2vw,23px);font-weight:700}
+  .quote span{display:block;color:var(--muted);font-weight:500;font-size:.7em;margin-top:4px}
+  .price{font-size:clamp(28px,3.6vw,42px);font-weight:900;margin:6px 0}
+  .tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 8px;border-radius:999px;background:rgba(184,255,60,.12);color:var(--lime);margin-bottom:8px}
+  .note{color:var(--muted);font-size:13px;margin-top:16px}
+  .check li{list-style:none;padding-left:28px;position:relative;margin:7px 0}
+  .check li::before{content:"✓";position:absolute;left:0;color:var(--lime);font-weight:900}
+  .chrome{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;
+    padding:10px clamp(16px,3vw,32px) calc(10px + env(safe-area-inset-bottom));font-size:13px;color:var(--muted);z-index:5}
+  .bar{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,var(--pink),var(--cyan));transition:width .3s}
+  .nav button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;
+    width:44px;height:36px;font-size:18px;cursor:pointer}
+  @media print{
+    html,body{overflow:visible;height:auto}
+    .slide{position:relative;opacity:1;transform:none;page-break-after:always;min-height:100vh}
+    .chrome,.bar{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide">
+  <div class="kicker">Clip Autopilot</div>
+  <h1>A clipping page<br>that <span class="pink">runs itself.</span></h1>
+  <p class="lead">It records the streams, cuts the clips, writes the hooks and posts them. You approve from your phone and get paid per view.</p>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="kicker">The opportunity</div>
+  <h2>Clipping pays. The work is what kills it.</h2>
+  <div class="grid g2">
+    <div class="card"><h3 class="lime">Brands and streamers pay per view</h3><p>Clipping campaigns pay about <b>$1–2 per 1,000 views</b> on short clips. Big launches like GTA 6 bring dozens of campaigns in a week.</p></div>
+    <div class="card"><h3 class="pink">But a clipper spends hours a day</h3><p>Watching streams, finding moments, cutting vertical, captioning, writing hooks, posting to every platform, then submitting each link inside 30 minutes.</p></div>
+  </div>
+  <p class="lead">Most people quit before the views come in. Clip Autopilot does the hours for them.</p>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">How it works</div>
+  <h2>The loop</h2>
+  <div class="flow">
+    <div class="step">Live streams<small>Twitch, every hour</small></div><span class="arrow">→</span>
+    <div class="step">Record + find moments<small>chat spikes, hype, loudness</small></div><span class="arrow">→</span>
+    <div class="step">Cut 9:16 clips<small>captions, hook, rule check</small></div><span class="arrow">→</span>
+    <div class="step">Screened + hooks written<small>cutscenes and filler removed</small></div><span class="arrow">→</span>
+    <div class="step you">You tap Approve<small>watch the clip in chat</small></div><span class="arrow">→</span>
+    <div class="step">Posts everywhere<small>Reels, Shorts, X</small></div><span class="arrow">→</span>
+    <div class="step you">Paste the link<small>nudge arrives in 2 minutes</small></div>
+  </div>
+  <p class="lead">Green steps are the only work. Everything else runs on free tools.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="kicker">Your job</div>
+  <h2>Two taps a clip.</h2>
+  <div class="grid g2">
+    <div class="card"><div class="big lime">1</div><h3>Approve</h3><p>Clips land in your chat with the hook and captions already done. Watch it, tap Approve, Change hook or Reject.</p></div>
+    <div class="card"><div class="big cyan">2</div><h3>Submit</h3><p>Paid clips post the moment you approve. Within about 2 minutes you get the live link and the submit button. Paste, done.</p></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="kicker">Proof · GamerTagZar, GTA 6 launch week</div>
+  <h2>Built and live in under 48 hours.</h2>
+  <div class="grid g3">
+    <div class="card"><div class="big pink">2,532</div><p>Instagram views on one clip, on a brand-new account, day one</p></div>
+    <div class="card"><div class="big cyan">28</div><p>clips an hour at most, when all tracked streamers are live, recorded in parallel</p></div>
+    <div class="card"><div class="big lime">£0</div><p>monthly tool cost, running on free tiers</p></div>
+  </div>
+  <p class="note">Real numbers from the first account. Views vary by clip and niche; earnings depend on approved views and campaign budgets.</p>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="kicker">What's inside</div>
+  <h2>Everything you get</h2>
+  <div class="grid g3">
+    <div class="card"><h3>Clip engine</h3><p>Records live streams, scores moments, cuts captioned vertical clips, checks the rules.</p></div>
+    <div class="card"><h3>Hourly autopilot</h3><p>Runs every hour on GitHub's free computers. Campaign streamers get more clips.</p></div>
+    <div class="card"><h3>One-tap publisher</h3><p>A Make.com flow posting to Instagram Reels, YouTube Shorts and X.</p></div>
+    <div class="card"><h3>Approval in chat</h3><p>Clips arrive in your Claude chat to watch and approve on your phone.</p></div>
+    <div class="card"><h3>Submit nudges</h3><p>The live link and submit button, sent straight after a paid clip posts.</p></div>
+    <div class="card"><h3>Playbook + skill</h3><p>The full process as a Claude skill, plus hooks, rules and a learning log.</p></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">The rules that protect your money</div>
+  <h2>Learned the hard way, so you don't have to.</h2>
+  <div class="grid g2">
+    <div class="card"><h3 class="amber">30-minute submit window</h3><p>Late links are rejected. Paid clips post on approval, never on a timer while you're away.</p></div>
+    <div class="card"><h3 class="amber">Disclosure on screen</h3><p>A small "#ad" at the start of every paid clip. Caption-only can be rejected.</p></div>
+    <div class="card"><h3 class="amber">No cutscenes or spoilers</h3><p>Publishers take them down. Every clip is screened before you see it.</p></div>
+    <div class="card"><h3 class="amber">Platform limits handled</h3><p>Instagram bitrate caps, YouTube's new-channel upload limit, same-language streamers only.</p></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="kicker">Hooks that worked</div>
+  <h2>Sound like a secret, stay true to the clip.</h2>
+  <div class="quote">"Wait... GTA 6 cars are keyless?"<span>2,532 views</span></div>
+  <div class="quote">"Did you know you can rob a $150,000 bank in GTA 6?"</div>
+  <div class="quote">"I just found out you make $2,000 driving a van in GTA 6"</div>
+  <div class="quote">"Nobody told me GTA 6 has basketball"</div>
+  <p class="note">Growth clips also get emoji stickers on key words and an end-card question that brings in comments.</p>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="kicker">Setup</div>
+  <h2>Live in about an hour.</h2>
+  <ul class="check card">
+    <li>Copy the repo template and connect it to Claude</li>
+    <li>Instagram Creator account linked to a Facebook Page, plus a YouTube channel</li>
+    <li>Connect both in Make.com (free plan)</li>
+    <li>Join your campaigns and list their streamers</li>
+    <li>List same-language streamers for growth clips</li>
+    <li>First clips arrive within the hour</li>
+  </ul>
+  <p class="note">Works for any streamed game or creator that runs clipping campaigns, not just GTA 6.</p>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="kicker">Packages</div>
+  <h2>Pick how hands-on you want to be.</h2>
+  <div class="grid g3">
+    <div class="card"><span class="tag">DIY</span><h3>Template + skill</h3><div class="price">£49</div><ul><li>Repo template and workflows</li><li>Clip Autopilot skill</li><li>Setup guide</li></ul></div>
+    <div class="card you"><span class="tag">Most popular</span><h3>Done-with-you</h3><div class="price">£199</div><ul><li>Everything in DIY</li><li>1-hour live setup call</li><li>First week of tuning</li></ul></div>
+    <div class="card"><span class="tag">Hands-off</span><h3>Managed page</h3><div class="price">£99/mo</div><ul><li>We run it for you</li><li>You only approve and submit</li><li>Weekly results report</li></ul></div>
+  </div>
+  <p class="note">Suggested prices. Edit to suit your market.</p>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="kicker">Straight talk</div>
+  <h2>What it is, and what it isn't.</h2>
+  <div class="grid g2">
+    <div class="card"><h3 class="lime">It is</h3><ul><li>A working system that saves hours a day</li><li>Built on free tools you own</li><li>Proven on a live page</li></ul></div>
+    <div class="card"><h3 class="pink">It isn't</h3><ul><li>Guaranteed income: pay depends on approved views and campaign budgets</li><li>A way around platform rules: it follows them</li></ul></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <div class="kicker">Clip Autopilot</div>
+  <h1>Stop clipping.<br><span class="lime">Start approving.</span></h1>
+  <p class="lead">Message to get set up this week.</p>
+</section>
+
+</main>
+<div class="chrome">
+  <span id="count">1 / 12</span>
+  <span class="nav"><button id="prev" aria-label="Previous">‹</button> <button id="next" aria-label="Next">›</button></span>
+</div>
+<script>
+(function(){
+  var s=[].slice.call(document.querySelectorAll('.slide')), i=0;
+  function go(n){ i=Math.max(0,Math.min(s.length-1,n));
+    s.forEach(function(el,k){el.classList.toggle('on',k===i)});
+    document.getElementById('count').textContent=(i+1)+' / '+s.length;
+    document.getElementById('bar').style.width=((i+1)/s.length*100)+'%';
+    try{history.replaceState(null,'','#'+(i+1))}catch(e){} }
+  document.getElementById('prev').onclick=function(){go(i-1)};
+  document.getElementById('next').onclick=function(){go(i+1)};
+  document.addEventListener('keydown',function(e){
+    if(['ArrowRight','PageDown',' '].indexOf(e.key)>-1){e.preventDefault();go(i+1)}
+    if(['ArrowLeft','PageUp'].indexOf(e.key)>-1){e.preventDefault();go(i-1)}});
+  var x0=null;
+  document.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){ if(x0===null)return;
+    var dx=e.changedTouches[0].clientX-x0; if(Math.abs(dx)>50) go(i+(dx<0?1:-1)); x0=null});
+  var h=parseInt((location.hash||'#1').slice(1),10); go(isNaN(h)?0:h-1);
+})();
+</script>
+</body>
+</html>
